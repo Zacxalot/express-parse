@@ -3,39 +3,33 @@ use std::fs;
 
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take, take_till, take_until, take_while},
-    character::{
-        complete::{char, digit1},
-        is_digit,
-    },
+    bytes::complete::{tag, take, take_until},
+    character::complete::{char, digit1},
     multi::{many0, many1, separated_list0},
     sequence::delimited,
     IResult,
 };
 
 fn main() {
-    let file = fs::read_to_string("2.step")
+    let file = fs::read_to_string("1.step")
         .unwrap()
         .replace('\n', "")
         .replace('\r', "");
 
     let (_, parsed) = express_file(&file).unwrap();
 
-    println!("{:?}", parsed[2]);
+    for line in parsed {
+        println!("{:?}", line)
+    }
 
     // println!("{:?}", parsed);
 }
 
 fn express_file(input: &str) -> IResult<&str, Vec<DataLine>> {
-    let (data, preamble) = take_until("DATA;")(input)?;
+    let (data, _preamble) = take_until("DATA;")(input)?;
     let (data, _) = take(5usize)(data)?;
 
     let (remaining, data) = many1(data_line)(data)?;
-
-    // let mut chunks = data.split(";");
-    // chunks.next();
-
-    // chunks.map(|line| )
 
     Ok((remaining, data))
 }
@@ -93,14 +87,16 @@ fn delimited_chunks(input: &str) -> IResult<&str, Vec<Chunk>> {
 #[derive(Debug)]
 struct Chunk<'a> {
     tag: &'a str,
-    elements: Vec<Element>,
+    elements: Vec<Element<'a>>,
 }
 
 #[derive(Debug)]
-enum Element {
+enum Element<'a> {
     Reference(u32),
     Dollar,
-    Elements(Vec<Element>),
+    Elements(Vec<Element<'a>>),
+    String(&'a str),
+    DotString(&'a str),
 }
 
 fn delimited_elements(input: &str) -> IResult<&str, Vec<Element>> {
@@ -108,7 +104,7 @@ fn delimited_elements(input: &str) -> IResult<&str, Vec<Element>> {
 }
 
 fn element(input: &str) -> IResult<&str, Element> {
-    alt((reference, dollar, nested_elements))(input)
+    alt((reference, dollar, nested_elements, string, dot_string))(input)
 }
 
 fn nested_elements(input: &str) -> IResult<&str, Element> {
@@ -130,4 +126,14 @@ fn reference(input: &str) -> IResult<&str, Element> {
 fn dollar(input: &str) -> IResult<&str, Element> {
     let (remaining, _) = char('$')(input)?;
     Ok((remaining, Element::Dollar))
+}
+
+fn string(input: &str) -> IResult<&str, Element> {
+    let (remaining, string_value) = delimited(tag("'"), take_until("'"), tag("'"))(input)?;
+    Ok((remaining, Element::String(string_value)))
+}
+
+fn dot_string(input: &str) -> IResult<&str, Element> {
+    let (remaining, string_value) = delimited(tag("."), take_until("."), tag("."))(input)?;
+    Ok((remaining, Element::DotString(string_value)))
 }
