@@ -7,8 +7,8 @@ use crate::element::{delimited_elements, Element};
 
 #[derive(Debug)]
 pub struct Chunk<'a> {
-    tag: &'a str,
-    elements: Vec<Element<'a>>,
+    pub tag: &'a str,
+    pub elements: Vec<Element<'a>>,
 }
 
 pub fn to_chunks(input: &str) -> IResult<&str, Vec<Chunk>> {
@@ -21,7 +21,7 @@ pub fn single_chunk_as_vec(input: &str) -> IResult<&str, Vec<Chunk>> {
 }
 
 pub fn single_chunk(input: &str) -> IResult<&str, Chunk> {
-    let (line, tag_value) = take_until("(")(input)?;
+    let (line, tag_value) = take_until("(")(input.trim())?;
     let (line, elements) = delimited_elements(line)?;
 
     Ok((

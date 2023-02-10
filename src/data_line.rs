@@ -8,12 +8,13 @@ use crate::chunk::{to_chunks, Chunk};
 
 #[derive(Debug)]
 pub struct DataLine<'a> {
-    number: u32,
-    chunks: Vec<Chunk<'a>>,
+    pub number: u32,
+    pub chunks: Vec<Chunk<'a>>,
 }
 
 pub fn data_line(input: &str) -> IResult<&str, DataLine> {
     let (remaining, line) = take_until(";")(input)?;
+    println!("{}", line);
     let (next_line, _) = take(1usize)(remaining)?;
 
     let (line, _) = char('#')(line)?;
