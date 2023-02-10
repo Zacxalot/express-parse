@@ -8,7 +8,7 @@ use nom::{
         complete::{char, digit1},
         is_digit,
     },
-    multi::{many1, separated_list0},
+    multi::{many0, many1, separated_list0},
     sequence::delimited,
     IResult,
 };
@@ -21,7 +21,7 @@ fn main() {
 
     let (_, parsed) = express_file(&file).unwrap();
 
-    println!("{:?}", parsed[0]);
+    println!("{:?}", parsed[2]);
 
     // println!("{:?}", parsed);
 }
@@ -43,8 +43,7 @@ fn express_file(input: &str) -> IResult<&str, Vec<DataLine>> {
 #[derive(Debug)]
 struct DataLine<'a> {
     number: u32,
-    tag: &'a str,
-    val: Vec<Element>,
+    chunks: Vec<Chunk<'a>>,
 }
 
 fn data_line(input: &str) -> IResult<&str, DataLine> {
@@ -54,17 +53,47 @@ fn data_line(input: &str) -> IResult<&str, DataLine> {
     let (line, _) = char('#')(line)?;
     let (line, number) = take_until("=")(line)?;
     let (line, _) = char('=')(line)?;
-    let (line, line_tag) = take_until("(")(line)?;
-
-    let (_, val) = delimited_elements(line)?;
+    let (_, chunks) = to_chunks(line)?;
 
     let data_line: DataLine = DataLine {
         number: number.parse::<u32>().unwrap(),
-        tag: line_tag,
-        val,
+        chunks,
     };
 
     Ok((next_line, data_line))
+}
+
+fn to_chunks(input: &str) -> IResult<&str, Vec<Chunk>> {
+    alt((delimited_chunks, single_chunk_as_vec))(input)
+}
+
+fn single_chunk_as_vec(input: &str) -> IResult<&str, Vec<Chunk>> {
+    let (remaining, chunk) = single_chunk(input)?;
+    Ok((remaining, vec![chunk]))
+}
+
+fn single_chunk(input: &str) -> IResult<&str, Chunk> {
+    let (line, tag_value) = take_until("(")(input)?;
+    let (line, elements) = delimited_elements(line)?;
+
+    Ok((
+        line,
+        Chunk {
+            tag: tag_value,
+            elements,
+        },
+    ))
+}
+
+fn delimited_chunks(input: &str) -> IResult<&str, Vec<Chunk>> {
+    let (remaining, chunks) = delimited(char('('), many0(single_chunk), char(')'))(input)?;
+    Ok((remaining, chunks))
+}
+
+#[derive(Debug)]
+struct Chunk<'a> {
+    tag: &'a str,
+    elements: Vec<Element>,
 }
 
 #[derive(Debug)]
