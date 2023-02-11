@@ -2,10 +2,11 @@ use nom::{
     branch::alt, bytes::complete::take_until, character::complete::char, combinator::opt,
     multi::many0, sequence::delimited, IResult,
 };
+use serde::Serialize;
 
 use crate::element::{delimited_elements, Element};
 
-#[derive(Debug)]
+#[derive(Serialize, Debug)]
 pub struct Chunk<'a> {
     pub tag: &'a str,
     pub elements: Vec<Element<'a>>,

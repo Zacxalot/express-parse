@@ -1,7 +1,8 @@
-use std::fs;
+use std::{fs, io::Write};
 
 use data_line::{data_line, DataLine};
 
+use flate2::{write::ZlibEncoder, Compression};
 use nom::{
     bytes::complete::{tag, take_until},
     multi::many1,
@@ -23,6 +24,16 @@ fn main() {
     if !remaining.is_empty() {
         panic!("Got to data ref #{}", parsed.last().unwrap().number)
     }
+
+    // Encode to json
+    let json = serde_json::to_string(&parsed).unwrap();
+    fs::write("test.json", json).unwrap();
+
+    // Encode to sgcad
+    let encoded: Vec<u8> = bincode::serialize(&parsed).unwrap();
+    let mut zlib_encoded = ZlibEncoder::new(Vec::new(), Compression::default());
+    zlib_encoded.write_all(&encoded).unwrap();
+    fs::write("test.sgcad", zlib_encoded.finish().unwrap()).unwrap();
 }
 
 fn express_file(input: &str) -> IResult<&str, Vec<DataLine>> {

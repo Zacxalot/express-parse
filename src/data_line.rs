@@ -3,10 +3,11 @@ use nom::{
     character::complete::char,
     IResult,
 };
+use serde::Serialize;
 
 use crate::chunk::{to_chunks, Chunk};
 
-#[derive(Debug)]
+#[derive(Serialize, Debug)]
 pub struct DataLine<'a> {
     pub number: u32,
     pub chunks: Vec<Chunk<'a>>,

@@ -7,10 +7,11 @@ use nom::{
     sequence::delimited,
     IResult,
 };
+use serde::Serialize;
 
 use crate::chunk::{single_chunk, Chunk};
 
-#[derive(Debug)]
+#[derive(Serialize, Debug)]
 pub enum Element<'a> {
     Reference(u64),
     Dollar,
