@@ -1,6 +1,6 @@
 use nom::{
-    branch::alt, bytes::complete::take_until, character::complete::char, multi::many0,
-    sequence::delimited, IResult,
+    branch::alt, bytes::complete::take_until, character::complete::char, combinator::opt,
+    multi::many0, sequence::delimited, IResult,
 };
 
 use crate::element::{delimited_elements, Element};
@@ -22,13 +22,13 @@ pub fn single_chunk_as_vec(input: &str) -> IResult<&str, Vec<Chunk>> {
 
 pub fn single_chunk(input: &str) -> IResult<&str, Chunk> {
     let (line, tag_value) = take_until("(")(input.trim())?;
-    let (line, elements) = delimited_elements(line)?;
+    let (line, elements) = opt(delimited_elements)(line)?;
 
     Ok((
         line,
         Chunk {
             tag: tag_value,
-            elements,
+            elements: elements.unwrap_or_default(),
         },
     ))
 }

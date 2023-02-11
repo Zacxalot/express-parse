@@ -14,7 +14,6 @@ pub struct DataLine<'a> {
 
 pub fn data_line(input: &str) -> IResult<&str, DataLine> {
     let (remaining, line) = take_until(";")(input)?;
-    println!("{}", line);
     let (next_line, _) = take(1usize)(remaining)?;
 
     let (line, _) = char('#')(line)?;
