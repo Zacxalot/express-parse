@@ -1,0 +1,2 @@
+# Express-Parse
+This is a very basic EXPRESS/STEP parser I wrote in a couple of hours. Probably doesn't work with quite a lot of STEP files and should not be used for anything serious, only to learn from.
